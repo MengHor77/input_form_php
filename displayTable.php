@@ -2,98 +2,61 @@
 // Include necessary files for database connection and table creation
 include_once 'connection.php';
 include_once 'createTable.php';
+include_once 'insertTodatabase.php';
 
-// Check if the form has been submitted
-if (isset($_POST['submit'])) {
-    $name = $_POST['name'];
-    $price = $_POST['price'];
-    $qty = $_POST['qty'];
-    $image = '';
-
-    // Image upload handling
-    if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
-        if (!empty($_FILES['image']['name'])) {
-            $upload_dir = __DIR__ . '/imageInsert/';
-            if (!is_dir($upload_dir)) {
-                mkdir($upload_dir, 0755, true); // Create the directory if it doesn't exist
-            }
-            $file_name = basename($_FILES['image']['name']);
-            $file_tmp = $_FILES['image']['tmp_name'];
-            $file_path = $upload_dir . $file_name;
-
-            // Check file type
-            $allowed_types = ['jpg', 'jpeg', 'png', 'gif'];
-            $file_ext = pathinfo($file_name, PATHINFO_EXTENSION);
-            if (in_array($file_ext, $allowed_types)) {
-                if (move_uploaded_file($file_tmp, $file_path)) {
-                    $image = $file_name; // Save only the filename to be stored in the database
-                } else {
-                    die('Failed to upload image.'); // Stop script execution
-                }
-            } else {
-                die('Invalid file type. Only JPG, JPEG, PNG, and GIF allowed.');
-            }
-        } else {
-            die('No image file selected.');
-        }
-    }
-
-    // Using prepared statements for security
-    $sql = "INSERT INTO input_test_php2 (name, price, qty, image) VALUES ('$name', '$price', '$qty', '$image')";
-    if ($cnn->query($sql) === TRUE) {
-        echo 'Insert successful!<br>';
-        echo 'Name: ' . htmlspecialchars($name) . "<br>";
-        echo 'Price: ' . htmlspecialchars($price) . "<br>";
-        echo 'Quantity: ' . htmlspecialchars($qty) . "<br>";
-        
-        // Display the uploaded image
-        if ($image) {
-            echo 'Image: <img src="imageInsert/' . htmlspecialchars($image) . '" alt="' . htmlspecialchars($name) . '" style="width:100px;height:auto;"><br>';
-        }
-    } else {
-        echo 'Error inserting: ' . $stmt->error;
-    }
-}
+// Fetch products from the database
+$sql = "SELECT * FROM input_test_php2"; // Adjust table name as needed
+$result = $cnn->query($sql);
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Insert to Database</title>
+    <title>Product Display</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.12/dist/tailwind.min.css" rel="stylesheet">
 </head>
-
 <body>
-    <div class="flex justify-center items-center h-screen bg-gray-100">
-        <form action="" method="POST" enctype="multipart/form-data" class="bg-red-400 p-6 rounded-lg shadow-lg space-y-4">
-            <div>
-                <label for="name" class="block text-white font-bold">Name</label>
-                <input type="text" name="name" id="name" class="mt-1 block w-full p-2 rounded border">
-            </div>
+    <div class="container mx-auto p-6">
+        <h1 class="text-2xl font-bold mb-6 text-center">Product List</h1>
 
-            <div>
-                <label for="price" class="block text-white font-bold">Price</label>
-                <input type="text" name="price" id="price" class="mt-1 block w-full p-2 rounded border">
+        <?php if ($result && $result->num_rows > 0): ?>
+            <div class="overflow-x-auto">
+                <table class="min-w-full border border-gray-300">
+                    <thead class="bg-gray-200">
+                        <tr>
+                            <th class="border border-gray-300 px-4 py-2 text-left">Name</th>
+                            <th class="border border-gray-300 px-4 py-2 text-right">Price</th>
+                            <th class="border border-gray-300 px-4 py-2 text-right">Quantity</th>
+                            <th class="border border-gray-300 px-4 py-2 text-center">Image</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php while ($row = $result->fetch_assoc()): ?>
+                            <tr class="hover:bg-gray-100">
+                                <td class="border border-gray-300 px-4 py-2"><?php echo htmlspecialchars($row['name']); ?></td>
+                                <td class="border border-gray-300 px-4 py-2 text-right"><?php echo htmlspecialchars($row['price']); ?></td>
+                                <td class="border border-gray-300 px-4 py-2 text-right"><?php echo htmlspecialchars($row['qty']); ?></td>
+                                <td class="border border-gray-300 px-4 py-2 text-center">
+                                    <?php 
+                                        // Ensure the image path is correct
+                                        $imagePath = 'imageInsert/' . htmlspecialchars($row['image']);
+                                    ?>
+                                    <?php if (file_exists($imagePath)): ?>
+                                        <img src="<?php echo $imagePath; ?>" alt="<?php echo htmlspecialchars($row['name']); ?>" class="w-20 h-20 object-cover mx-auto">
+                                    <?php else: ?>
+                                        <span class="text-red-500">Image not found</span>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
             </div>
-
-            <div>
-                <label for="qty" class="block text-white font-bold">Quantity</label>
-                <input type="text" name="qty" id="qty" class="mt-1 block w-full p-2 rounded border">
-            </div>
-
-            <div>
-                <label for="image" class="block text-white font-bold">Image</label>
-                <input type="file" name="image" id="image" class="mt-1 block w-full p-2 rounded border">
-            </div>
-
-            <button type="submit" name="submit" id="submit" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700">
-                Submit
-            </button>
-        </form>
+        <?php else: ?>
+            <p class="text-red-500 text-center">No records found.</p>
+        <?php endif; ?>
     </div>
 </body>
-
 </html>
