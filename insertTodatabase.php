@@ -46,16 +46,13 @@ if (isset($_POST['submit'])) {
         }
     }
 
-    // Using prepared statements for security
-    $stmt = $cnn->prepare("INSERT INTO input_test_php2 (name, price, qty, image) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("ssss", $name, $price, $qty, $image);
-
-    if ($stmt->execute()) {
+    $sql = "INSERT INTO input_test_php2 (name, price, qty, image) VALUES ('$name', '$price', '$qty', '$image')";
+    if ($cnn->query($sql) === TRUE) {
         echo 'Insert successful!';
     } else {
-        echo 'Error inserting: ' . $stmt->error;
+        echo 'Error inserting: ' . $sql->error;
     }
-    $stmt->close();  // Close the statement
+   
 }
 ?>
 
