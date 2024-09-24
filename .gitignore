@@ -9,3 +9,6 @@
 
 # Ignore JSON files
 *.json
+# css
+/dist/styles.css/
+/styles.css
