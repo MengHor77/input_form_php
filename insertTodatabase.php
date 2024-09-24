@@ -1,9 +1,10 @@
 <?php
 
-include_once 'connection.php'; // Database connection file
-include_once 'createTable.php'; // Table creation logic (if required)
+include_once 'connection.php';  // Ensure this file properly connects to the database
+include_once 'createTable.php';  // Ensure this file creates the necessary table if it doesn't exist
 
 if (isset($_POST['submit'])) {
+    // Sanitize input data
     $name = htmlspecialchars(strip_tags($_POST['name']));
     $price = htmlspecialchars(strip_tags($_POST['price']));
     $qty = htmlspecialchars(strip_tags($_POST['qty']));
@@ -31,10 +32,10 @@ if (isset($_POST['submit'])) {
 
             // Check file type
             $allowed_types = ['jpg', 'jpeg', 'png', 'gif'];
-            $file_ext = pathinfo($file_name, PATHINFO_EXTENSION);
+            $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION)); // Convert to lowercase for comparison
             if (in_array($file_ext, $allowed_types)) {
                 if (move_uploaded_file($file_tmp, $file_path)) {
-                    $image = $file_path; // Save image path to be stored in the database
+                    $image = $file_name; // Save only the filename to be stored in the database
                 } else {
                     die('Failed to upload image.'); // Stop script execution
                 }
@@ -46,15 +47,17 @@ if (isset($_POST['submit'])) {
         }
     }
 
+    // Prepare SQL query for inserting data
     $sql = "INSERT INTO input_test_php2 (name, price, qty, image) VALUES ('$name', '$price', '$qty', '$image')";
     if ($cnn->query($sql) === TRUE) {
         echo 'Insert successful!';
     } else {
-        echo 'Error inserting: ' . $sql->error;
+        // Corrected error message to use the database connection error
+        echo 'Error inserting: ' . $cnn->error; 
     }
-   
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
